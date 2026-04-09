@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Cart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-50 min-h-screen p-6">
+
+    <h1 class="text-3xl font-bold text-center mb-10 text-gray-800">Your Cart</h1>
+
+    <div class="max-w-3xl mx-auto space-y-6">
+
+        <% cart.forEach(item => { %>
+
+            <div class="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition flex justify-between items-center">
+
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900"><%= item.name %></h2>
+                    <p class="text-gray-600">₹<%= item.price %></p>
+                </div>
+
+                <a href="/cart/remove/<%= item._id %>"
+                   class="text-red-600 font-semibold hover:underline">
+                    Remove
+                </a>
+
+            </div>
+
+        <% }) %>
+
+        <a href="/checkout"
+           class="block mt-8 py-3 bg-black text-center text-white rounded-xl hover:bg-gray-900 transition">
+            Proceed to Checkout
+        </a>
+
+    </div>
+
+</body>
+</html>

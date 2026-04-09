@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scatch | Auth</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #fff;
+            padding: 40px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 80%;
+            display: flex;
+            justify-content: space-between;
+            margin-top: 50px;
+        }
+
+        .box {
+            width: 45%;
+            padding: 20px;
+        }
+
+        h2, h3 {
+            margin-bottom: 10px;
+        }
+
+        h2 span {
+            color: #4c8bf5;
+        }
+
+        .input-box {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            background: #f7f7f7;
+        }
+
+        .btn {
+            padding: 10px 22px;
+            background: #4c8bf5;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            border: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+
+        <!-- Register -->
+        <div class="box">
+            <h2>Welcome to <span>Scatch</span></h2>
+            <p>Create your account</p>
+            <form action="/users/auth" method="POST">
+                <input type="text" name="fullname" class="input-box" placeholder="Full Name" required>
+                <input type="email" name="email" class="input-box" placeholder="Email" required>
+                <input type="password" name="password" class="input-box" placeholder="Password" required>
+                <button class="btn">Create My Account</button>
+            </form>
+        </div>
+
+        <!-- Login -->
+        <div class="box">
+            <h3>Login Your Account</h3>
+            <form action="/users/login" method="POST">
+                <input type="email" name="email" class="input-box" placeholder="Email" required>
+                <input type="password" name="password" class="input-box" placeholder="Password" required>
+                <button class="btn">Login</button>
+            </form>
+        </div>
+
+    </div>
+
+</body>
+</html>

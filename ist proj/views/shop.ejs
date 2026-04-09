@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shop</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen p-6">
+
+    <h1 class="text-3xl font-bold text-center mb-10 text-gray-800">Shop</h1>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+
+        <% products.forEach(p => { %>
+
+            <div class="bg-white shadow-lg rounded-xl p-5 hover:shadow-2xl transition cursor-pointer">
+
+                <img src="<%= p.image %>"
+                     class="h-48 w-full object-cover rounded-xl mb-4">
+
+                <h2 class="text-xl font-bold text-gray-900"><%= p.name %></h2>
+                <p class="text-gray-600 mt-1">₹<%= p.price %></p>
+
+                <a href="/cart/add/<%= p._id %>"
+                   class="block mt-4 py-2 bg-black text-center text-white rounded-lg hover:bg-gray-800 transition">
+                    Add to Cart
+                </a>
+
+            </div>
+
+        <% }) %>
+
+    </div>
+
+</body>
+</html>
