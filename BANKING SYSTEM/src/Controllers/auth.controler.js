@@ -1,7 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const usermodel = require('../config/Models/user.model.js');
-const sendregiseremail = require('../services/email.services.js');
+const { sendregiseremail } = require('../services/email.services.js');
 
 const userregistercontroller = async (req, res) => {
     const { email, password, name } = req.body;

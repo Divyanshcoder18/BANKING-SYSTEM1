@@ -41,8 +41,6 @@ const sendEmail = async (to, subject, text, html) => {
   }
 };
 
-
-
 async function sendregiseremail(useremail,name){
   const subj  = "Welcome to our banking system";
   const text = `Hello ${name}, welcome to our banking system.`;
@@ -51,7 +49,24 @@ async function sendregiseremail(useremail,name){
   await sendEmail(useremail, subj, text, html);
  
 }
-module.exports = sendregiseremail; 
+
+const sendtransferemail = async(useremail,name,amount)=>{
+  const subj = "Transfer successful";
+  const text = `Hello ${name}, you have been transferred ${amount} to your account.`;
+  const html = `<h1>Hello ${name}, you have been transferred ${amount} to your account.</h1>`;
+  await sendEmail(useremail, subj, text, html);
+}
+
+const sendtransferfailemail = async(useremail,name)=>{
+  const subj = "Transfer failed";
+  const text = `Hello ${name}, your transfer has failed.`;
+  const html = `<h1>Hello ${name}, your transfer has failed.</h1>`;
+  await sendEmail(useremail, subj, text, html);
+}
+
+module.exports = {sendregiseremail,sendtransferemail,sendtransferfailemail}; 
+
+
 
 
 
