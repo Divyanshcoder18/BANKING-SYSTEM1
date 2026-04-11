@@ -4,6 +4,26 @@ const emailservice = require('../services/email.services.js');
 const accountmodel = require('../config/Models/accont.model.js'); // Fixed: missing import
 const mongoose = require('mongoose'); // Fixed: missing import for session
 
+async function createtransfer(req, res) { // ✅ Fix 1: code was outside any function
+    const {fromaccount,toaccount,amount,idempotencyKey} = req.body ;
+
+    if(!fromaccount || !toaccount || !idempotencyKey){
+        return res.status(401).json({
+           message:"all three are required"
+
+        })
+    }
+
+    // ab aase bhi ho skta hai id hi glt ho accounterski
+
+    const fromuser = await accountmodel.findOne({
+        _id: fromaccount ,  // ✅ Fix 2: was _id = fromaccount  (= → :)
+    })
+
+    const touser = await accountmodel.findOne({
+        _id: toaccount ,  // ✅ Fix 3: was _id = toaccount  (= → :)
+    })
+}
 
 async function createinitialfunds(req, res) { // Fixed: was "functioncreateinitialfunds" (missing space)
     const { toaccount, amount, idempotencykey } = req.body;
@@ -13,15 +33,45 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
             message: "all the fields are required",
         })
     }
-
+// validate idempotency key
     const existingtransaction = await transactionmodel.findOne({
-        idempotencyKey: idempotencykey, // Fixed: field name must match schema (idempotencyKey)
-    })
+        idempotencyKey: idempotencykey,
+    })   
     if (existingtransaction) {
+
+        if(existingtransaction.status === "SUCCESS"){
+            return res.status(400).json({
+                message: "transaction already exists",
+            })
+        }
+
+        if(existingtransaction.status === "PENDING"){
+            return res.status(400).json({
+                message: "transaction is pending please wait",
+            })
+        }
+        if(existingtransaction.status === "FAILED"){
+            return res.status(400).json({
+                message: "transaction Failed please try again",
+            })
+        }
+        if(existingtransaction.status === "CANCELLED"){
+            return res.status(400).json({
+                message: "transaction cancelled please try again",
+            })
+        }
+      
+    }
+
+    // 3 . Check account status 
+    if(fromuseraccount!='Active'||touseraccount!='ACTIVE'){
         return res.status(400).json({
-            message: "transaction already exists",
+            message:"account is not active",
         })
     }
+
+    // derive sender message form ledger --> suff balance hona chahiye tbhi deduct kr paaoge !!
+
 
     // Fixed: all this code was OUTSIDE the function (after closing } on line 24)
     const touseraccount = await accountmodel.findOne({ // Fixed: accountmodel now imported
@@ -93,4 +143,4 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
     }
 }
 
-module.exports = { createinitialfunds };
+module.exports = { createinitialfunds, createtransfer };
