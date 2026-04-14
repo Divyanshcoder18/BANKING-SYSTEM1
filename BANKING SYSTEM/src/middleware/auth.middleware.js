@@ -1,6 +1,7 @@
 const express = require('express');
 const jwt = require('jsonwebtoken'); // Added missing JWT import
 const usermodel = require('../config/Models/user.model.js'); // Added missing user model import
+const tokenblacklistmodel = require('../config/Models/blacklistmodel.js');
 
 async function authmiddleware(req, res, next) {
     const token = req.cookies.token;
@@ -9,6 +10,12 @@ async function authmiddleware(req, res, next) {
         return res.status(401).json({ // Fixed res.status.json to res.status(401).json
             message: "unauthorized access",
         });
+    }
+    const isblacklisted  = await tokenblacklistmodel.findOne({token:token});
+    if(isblacklisted){
+        return res.status(401).json({
+            message:"unauthorized access", 
+        })
     }
 
     try {
@@ -39,6 +46,14 @@ async function authsystemmiddleware(req,res,next){
         return res.status(401).json({
             message:"unauthorized access", 
 
+        })
+    }
+
+
+    const isblacklisted = await tokenblacklistmodel.findOne({ token: token });
+    if(isblacklisted){
+        return res.status(401).json({
+            message:"unauthorized access", 
         })
     }
     try{

@@ -1,7 +1,7 @@
 const transactionmodel = require('../config/Models/transaction.model.js');
 const ledgermodel = require('../config/Models/ledger.models.js');
 const emailservice = require('../services/email.services.js');
-const accountmodel = require('../config/Models/accont.model.js'); // Fixed: missing import
+const accountmodel = require('../config/Models/account.model.js'); // Updated: renamed file
 const mongoose = require('mongoose'); // Fixed: missing import for session
 
 async function createtransfer(req, res) { // ✅ Fix 1: code was outside any function
@@ -55,39 +55,28 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
                 message: "transaction Failed please try again",
             })
         }
-        if(existingtransaction.status === "CANCELLED"){
-            return res.status(400).json({
-                message: "transaction cancelled please try again",
-            })
-        }
+        // Note: "CANCELLED" is not in your transaction model enum, so removed that check
       
     }
 
-    // 3 . Check account status 
-    if(fromuseraccount!='Active'||touseraccount!='ACTIVE'){
-        return res.status(400).json({
-            message:"account is not active",
-        })
-    }
-
-    // derive sender message form ledger --> suff balance hona chahiye tbhi deduct kr paaoge !!
-
-
     // Fixed: all this code was OUTSIDE the function (after closing } on line 24)
-    const touseraccount = await accountmodel.findOne({ // Fixed: accountmodel now imported
+    const touseraccount = await accountmodel.findOne({
         _id: toaccount,
     })
 
+    // ✅ null check FIRST — before populate, otherwise crash if account doesn't exist
     if (!touseraccount) {
         return res.status(404).json({
             message: "user not found -INVALID ACCOUNT",
         })
     }
 
-    const fromuseraccount = await accountmodel.findOne({ // Fixed: findone -> findOne
+    // populate user so we can get their email and name for notification
+    await touseraccount.populate('user')
+
+    const fromuseraccount = await accountmodel.findOne({ // Fixed query: systemUser is on User, not Account
         user: req.user._id,
         status: "ACTIVE",
-        systemUser: true, // Fixed: schema field is systemUser not systemuser
     })
 
     if (!fromuseraccount) {
@@ -95,6 +84,22 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
             message: "SYSTEM user not found -INVALID ACCOUNT",
         })
     }
+
+    // ✅ 3. Check account status — compare .status property, not the object itself
+    if(fromuseraccount.status !== 'ACTIVE' || touseraccount.status !== 'ACTIVE'){
+        return res.status(400).json({
+            message:"account is not active",
+        })
+    }
+
+    // ✅ derive sender balance from ledger
+    const balance = await fromuseraccount.getBalance(); // Fix: was fromaccount.getbalance() — fromaccount is just an ID string, fromuseraccount is the actual account object
+    if(balance < amount){
+        return res.status(400).json({
+            message: `insufficient balance. Your available balance is ₹${balance} but you requested ₹${amount}` // Fix: message was using amount twice instead of balance
+        })
+    }
+
 
     const session = await mongoose.startSession(); // Fixed: mongoose now imported
     session.startTransaction();
@@ -115,6 +120,14 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
             transaction: transaction[0]._id,
         }], { session })
 
+        await (()=>{
+            return new Promise((resolve,reject)=>{
+                setTimeout(()=>{
+                    resolve();
+                },10000);
+            })
+        })()
+
         const creditledgerentry = await ledgermodel.create([{ // Fixed: was "constcreditledgerentry" (missing space)
             account: touseraccount._id,
             type: "CREDIT",
@@ -128,6 +141,13 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
         await session.commitTransaction();
         session.endSession();
 
+        // ✅ Send success email to recipient
+        await emailservice.sendtransferemail(
+            touseraccount.user.email,  // recipient's email from populated user
+            touseraccount.user.name,   // recipient's name
+            amount                     // how much they received
+        );
+
         return res.status(201).json({ // Fixed: missing success response
             message: "Transaction successful",
             transaction: transaction[0],
@@ -136,6 +156,13 @@ async function createinitialfunds(req, res) { // Fixed: was "functioncreateiniti
     } catch (error) { // Fixed: missing try/catch — session would hang forever on error
         await session.abortTransaction();
         session.endSession();
+
+        // ✅ Send failure email to recipient
+        await emailservice.sendtransferfailemail(
+            touseraccount.user.email,  // recipient's email
+            touseraccount.user.name    // recipient's name
+        );
+
         return res.status(500).json({
             message: "Transaction failed",
             error: error.message,
