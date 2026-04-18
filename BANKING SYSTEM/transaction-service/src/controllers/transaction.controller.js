@@ -1,12 +1,13 @@
 const transactionmodel = require('../models/transaction.model.js');
 const ledgermodel = require('../models/ledger.model.js');
 const mongoose = require('mongoose');
+const { publishTransactionEvent } = require('../utils/producer.js');
 
 async function createtransfer(req, res) {
-    const { fromaccount, toaccount, amount, idempotencyKey } = req.body;
+    const { fromaccount, toaccount, amount, idempotencyKey, email } = req.body;
 
-    if (!fromaccount || !toaccount || !amount || !idempotencyKey) {
-        return res.status(400).json({ message: "All fields are required" });
+    if (!fromaccount || !toaccount || !amount || !idempotencyKey || !email) {
+        return res.status(400).json({ message: "All fields are required (including email for notifications)" });
     }
 
     const session = await mongoose.startSession();
@@ -53,6 +54,17 @@ async function createtransfer(req, res) {
 
         await session.commitTransaction();
         session.endSession();
+
+        // 6. ASYNC EVENT: Tell RabbitMQ the transaction is done
+        // We don't "await" this if we want it truly async, but awaiting 
+        // ensures we catch any connection errors early during debugging.
+        await publishTransactionEvent({
+            email,
+            amount,
+            type: "DEBIT", // or "TRANSFER"
+            transactionId: transaction[0]._id,
+            timestamp: new Date()
+        });
 
         return res.status(201).json({ message: "Transaction successful", transaction: transaction[0] });
 
