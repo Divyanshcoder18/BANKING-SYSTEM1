@@ -75,4 +75,21 @@ async function createtransfer(req, res) {
     }
 }
 
-module.exports = { createtransfer };
+async function gethistory(req, res) {
+    const { accountId } = req.params;
+
+    try {
+        const history = await transactionmodel.find({
+            $or: [
+                { fromaccount: accountId },
+                { toaccount: accountId }
+            ]
+        }).sort({ createdAt: -1 });
+
+        return res.status(200).json(history);
+    } catch (error) {
+        return res.status(500).json({ message: "Failed to fetch history", error: error.message });
+    }
+}
+
+module.exports = { createtransfer, gethistory };

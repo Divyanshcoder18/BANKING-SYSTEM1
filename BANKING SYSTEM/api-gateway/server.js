@@ -1,9 +1,12 @@
 require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const proxy = require('express-http-proxy');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+
+app.use(cors()); 
 
 // RATE LIMITING
 const limiter = rateLimit({
