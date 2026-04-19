@@ -8,6 +8,17 @@ const acctschema = new mongoose.Schema({
         required: [true, 'User must exist'],
         index: true,                      // Makes searching for all accounts of a user super fast
     },
+    nickname: {
+        type: String,
+        trim: true,
+        maxLength: [30, 'Nickname too long'],
+    },
+    accountType: {
+        type: String,
+        enum: ["SAVINGS", "CURRENT", "BUSINESS", "FIXED"],
+        default: "SAVINGS",
+        required: true,
+    },
     status: {
         type: String,
         enum: {

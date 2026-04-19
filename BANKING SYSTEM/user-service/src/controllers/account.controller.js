@@ -7,13 +7,35 @@ const axios = require('axios'); // The tool we use to "call" other services
  */
 async function accountcontroller(req, res) {
     try {
-        // req.user was provided by our Bouncer (auth.middleware)
+        const { accountType, nickname } = req.body;
+
+        // 1. Create the account in our database
         const account = await accountmodel.create({
             user: req.user._id,
+            accountType: accountType || "SAVINGS",
+            nickname: nickname || ""
         });
 
+        // 2. THE SIGNUP BONUS! (Microservice call)
+        // We automatically "deposit" $500 into the new account to welcome the user.
+        try {
+            await axios.post(`${process.env.TRANSACTION_SERVICE_URL}/api/transaction/deposit`, {
+                accountId: account._id,
+                amount: 500, // The $500 Welcome Bonus
+                idempotencyKey: `bonus-${account._id}`, // Ensures we only give the bonus ONCE per account
+                email: req.user.email
+            }, {
+                // We pass the user's token so the transaction service knows it's authorized
+                headers: { Authorization: req.headers.authorization }
+            });
+            console.log(`[BONUS] $500 deposited into new account ${account._id}`);
+        } catch (bonusError) {
+            // We don't want to CRASH the whole account creation if the bonus service is down
+            console.error("[BONUS ERROR]", bonusError.message);
+        }
+
         return res.status(201).json({
-            message: "Account created successfully",
+            message: "Account created successfully with $500 bonus!",
             account
         });
     } catch (error) {
@@ -29,15 +51,34 @@ async function accountcontroller(req, res) {
  */
 async function getuseraccount(req, res) {
     try {
-        // Find the user and "populate" their account info
-        // This is like saying: "Find me the user and bring their account files too"
-        const account = await accountmodel.find({ user: req.user._id });
+        // Find the user's accounts
+        const accounts = await accountmodel.find({ user: req.user._id });
         
-        if (!account || account.length === 0) {
+        if (!accounts || accounts.length === 0) {
             return res.status(404).json({ message: "No accounts found for this user" });
         }
 
-        return res.status(200).json({ accounts: account });
+        // --- THE MICROSERVICE CALL (BATCH) ---
+        // For each account, we ask the Transaction Service for the balance.
+        // We use Promise.all to do this quickly in parallel.
+        const accountsWithBalances = await Promise.all(accounts.map(async (acc) => {
+            try {
+                // We use the singular '/api/transaction/balance' to match the other service
+                const response = await axios.get(`${process.env.TRANSACTION_SERVICE_URL}/api/transaction/balance/${acc._id}`);
+                return {
+                    ...acc.toObject(),
+                    balance: response.data.balance
+                };
+            } catch (err) {
+                console.error(`Balance fetch failed for account ${acc._id}:`, err.message);
+                return {
+                    ...acc.toObject(),
+                    balance: 0 // Default to 0 if service is down
+                };
+            }
+        }));
+
+        return res.status(200).json({ accounts: accountsWithBalances });
     } catch (error) {
         return res.status(500).json({ message: "Error fetching accounts", error: error.message });
     }
@@ -62,8 +103,8 @@ async function getbalance(req, res) {
 
         // --- THE MICROSERVICE CALL ---
         // We call the Transaction Service to get the actual balance
-        // The URL comes from our .env file (TRANSACTION_SERVICE_URL)
-        const response = await axios.get(`${process.env.TRANSACTION_SERVICE_URL}/api/transactions/balance/${accountId}`);
+        // We ensure we use the singular '/api/transaction'
+        const response = await axios.get(`${process.env.TRANSACTION_SERVICE_URL}/api/transaction/balance/${accountId}`);
         
         const balance = response.data.balance;
 

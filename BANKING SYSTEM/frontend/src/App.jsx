@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 
 function App() {
@@ -15,9 +16,10 @@ function App() {
 
   return (
     <Routes>
-      {/* 2. LOGIC: If user is logged in, and they try to go to /login, 
+      {/* 2. LOGIC: If user is logged in, and they try to go to /login or /register, 
              automatically send them to /dashboard */}
       <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <Login />} />
+      <Route path="/register" element={user ? <Navigate to="/dashboard" /> : <Register />} />
 
       {/* 3. LOGIC: If user tries to go to /dashboard but IS NOT logged in, 
              automatically send them back to /login */}

@@ -1,0 +1,87 @@
+# Banking System Backend Documentation
+
+This document serves as a comprehensive guide to the current state of the Banking System backend project. It outlines the architectural patterns, directory structures, and the specific files created so far.
+
+## Architecture Pattern
+
+This project utilizes the **MVC (Model-View-Controller)** pattern, specifically adapted for an API using the **Router-Controller-Model** pattern.
+* **Router**: Maps incoming HTTP requests (URLs) to the appropriate Controller function.
+* **Controller**: Contains the core business logic, orchestrating actions between the incoming request data and the Database Models.
+* **Model**: Serves as the blueprint and strict validation layer for reading/writing to the MongoDB database.
+
+---
+
+## Directory Structure
+
+```text
+src/
+├── app.js                          # Core application configuration and entry point
+├── config/
+│   └── Models/                     
+│       ├── accont.model.js         # Schema definition for bank accounts
+│       └── user.model.js           # Schema definition for system users
+├── Controllers/
+│   ├── account.controler.js        # Business logic for account-related actions
+│   └── auth.controler.js           # Business logic for registration and login
+├── routes/
+│   ├── acct.router.js              # Endpoint maps for account actions
+│   └── auth.router.js              # Endpoint maps for authentication actions
+└── services/
+    └── email.services.js           # Utility services (e.g., sending emails)
+```
+
+---
+
+## Core Components Overview
+
+### 1. The Entry Point (`app.js`)
+This is the root configuration file for the Express server.
+* **Middleware Configurations**: Configures the parsing of JSON, URL-encoded data, and cookies for incoming requests.
+* **Routing Hub**: It imports the modular routers (`authRouter`, `acctRouter`) and "mounts" them to base URL paths:
+  * Traffic hitting `/api/auth/*` is forwarded to the Auth Router.
+  * Traffic hitting `/api/account/*` is forwarded to the Account Router.
+
+### 2. User Authentication Module
+This module handles secure onboarding and logging in of users.
+
+* **Model** (`config/Models/user.model.js`):
+  * Fields: `email`, `name`, `password`.
+  * **Security**: Implements strict Regex validation for strong passwords and standard emails. The password field has `select: false` to prevent accidental data leaks.
+  * **Hooks**: Uses a Mongoose `pre("save")` hook to securely hash passwords with `bcrypt` (10 salt rounds) before saving them to the database. Contains a custom `comparePassword` method for secure login validation.
+
+* **Router** (`routes/auth.router.js`):
+  * Points `POST /register` to the registration controller.
+  * Points `POST /login` to the login controller.
+
+* **Controller** (`Controllers/auth.controler.js`):
+  * **Registration (`userregistercontroller`)**: Checks for duplicate emails, creates the user, generates a JWT token for immediate login validation, stores the token in a cookie, and dispatches a welcome email.
+  * **Login (`userlogincontroller`)**: Retrieves the user (explicitly requesting the password field using `.select("+password")`), verifies the hash against the submitted plain text, generates a new JWT token, sets a cookie, and returns the successful payload.
+
+### 3. Bank Account Module
+*(Currently in its foundational stages)*
+
+* **Model** (`config/Models/accont.model.js`):
+  * Links to a specific `user` object via a MongoDB `ObjectId` reference (`ref: "user"`).
+  * Fields: `status` (ACTIVE, FREEZE, CLOSED) and `currency` (Defaults to INR).
+
+* **Router** (`routes/acct.router.js`):
+  * Instantiated the Express Router and exported it so `app.js` can mount it. Endpoint configuration is pending.
+
+* **Controller** (`Controllers/account.controler.js`):
+  * Setup initiated by importing the `accont.model.js`. Controller functions pending.
+
+---
+
+## Technical Stack & Libraries
+* **Framework**: Express.js (Node.js)
+* **Database**: MongoDB (via Mongoose ODM)
+* **Security**: `bcrypt` (Password Hashing), `jsonwebtoken` (Auth Tokens)
+* **Middleware**: `cookie-parser` (Reading HTTP Cookies)
+
+---
+
+## Upcoming / Pending Work
+1. Add global or explicit `try-catch` blocks to asynchronous controller functions.
+2. Build out CRUD operations inside `account.controler.js` for handling monetary deposits, withdrawals, and balance checks.
+3. Hook up the new controller functions to the endpoints inside `acct.router.js`.
+4. Connect `app.js` to the MongoDB database using `mongoose.connect()`.
