@@ -1,20 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { createtransfer, gethistory, getbalance, deposit, withdraw } = require('../controllers/transaction.controller.js');
+const { createtransfer, gethistory, createdeposit, createwithdraw } = require('../controllers/transaction.controller.js');
+const { authmiddleware } = require('../middleware/auth.middleware.js');
 
-// This defines the URL: POST /api/transaction/transfer
-router.post('/transfer', createtransfer);
-
-// This defines the URL: GET /api/transaction/history/:accountId
-router.get('/history/:accountId', gethistory);
-
-// This defines the URL: GET /api/transaction/balance/:accountId
-router.get('/balance/:accountId', getbalance);
-
-// This defines the URL: POST /api/transaction/deposit
-router.post('/deposit', deposit);
-
-// This defines the URL: POST /api/transaction/withdraw
-router.post('/withdraw', withdraw);
+// Standardized routes PROTECTED by authentication
+router.post('/transfer', authmiddleware, createtransfer);
+router.get('/history/:accountId', authmiddleware, gethistory);
+router.post('/deposit', authmiddleware, createdeposit);
+router.post('/withdraw', authmiddleware, createwithdraw);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const usermodel = require('../models/user.model.js');
-const tokenblacklistmodel = require('../models/blacklist.model.js');
+const tokenblacklistmodel = require('../models/blacklistmodel.js');
 
 async function authmiddleware(req, res, next) {
     try {
@@ -18,8 +18,8 @@ async function authmiddleware(req, res, next) {
         }
 
         // 2. Verify the JWT
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'divu123');
+
         // 3. Attach User (This works here because Auth Service has the User model)
         const user = await usermodel.findOne({ _id: decoded.id });
         if (!user) {

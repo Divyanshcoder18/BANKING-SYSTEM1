@@ -20,10 +20,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-/**
- * REGISTERING ROUTES
- * Every URL in this service will now start with /api/account
- */
-app.use('/api/account', accountRoutes);
+// Mount all account routes directly (API Gateway handles the /api/users prefix)
+app.use('/', accountRoutes);
 
 module.exports = app;

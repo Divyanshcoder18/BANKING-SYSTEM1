@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Prefix all auth routes
-app.use('/api/auth', authRoutes);
+// Mount all auth routes directly (API Gateway handles the /api/auth prefix)
+app.use('/', authRoutes);
 
 module.exports = app;

@@ -1,28 +1,15 @@
 const mongoose = require('mongoose');
-
-// This is the blueprint for a bank account
 const acctschema = new mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",                      // Points to our User model
+        ref: "UserFresh",
         required: [true, 'User must exist'],
-        index: true,                      // Makes searching for all accounts of a user super fast
-    },
-    nickname: {
-        type: String,
-        trim: true,
-        maxLength: [30, 'Nickname too long'],
-    },
-    accountType: {
-        type: String,
-        enum: ["SAVINGS", "CURRENT", "BUSINESS", "FIXED"],
-        default: "SAVINGS",
-        required: true,
+        index: true,
     },
     status: {
         type: String,
         enum: {
-            values: ["ACTIVE", "FREEZE", "CLOSED"], // Only these 3 options allowed
+            values: ["ACTIVE", "FREEZE", "CLOSED"],
             message: "account may be suspended"
         },
         default: "ACTIVE"
@@ -30,11 +17,33 @@ const acctschema = new mongoose.Schema({
     currency: {
         type: String,
         required: true,
-        default: "INR",                   // Default is Indian Rupee
+        default: "INR",
+    },
+    nickname: {
+        type: String,
+        trim: true,
+    },
+    accountType: {
+        type: String,
+        enum: ["SAVINGS", "BUSINESS", "CURRENT", "FIXED"],
+        default: "SAVINGS",
     }
 }, { timestamps: true });
 
-// We add an index to help MongoDB search efficiently
-acctschema.index({ user: 1, status: 1 });
+acctschema.methods.getBalance = async function () {
+    const ledgermodel = require('./ledger.models.js');
+    const balance = await ledgermodel.aggregate([
+        { $match: { account: this._id } },
+        { $group: { _id: "$type", total: { $sum: "$amount" } } }
+    ]);
+    let credits = 0;
+    let debit = 0;
+    for (let entry of balance) {
+        if (entry._id == 'CREDIT') credits += entry.total;
+        if (entry._id == 'DEBIT') debit += entry.total;
+    }
+    return credits - debit;
+}
 
-module.exports = mongoose.model("account", acctschema);
+const accountmodel = mongoose.models.account || mongoose.model("account", acctschema);
+module.exports = accountmodel;

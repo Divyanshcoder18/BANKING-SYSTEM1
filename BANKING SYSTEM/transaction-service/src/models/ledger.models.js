@@ -39,5 +39,6 @@ ledgerschema.pre("deleteMany", preventledgermodification);
 ledgerschema.pre("findOneAndDelete", preventledgermodification);
 ledgerschema.pre("replaceOne", preventledgermodification);
 
-const ledgermodel = mongoose.model("ledger", ledgerschema);
+// Safe model registration for microservices
+const ledgermodel = mongoose.models.ledger || mongoose.model("ledger", ledgerschema);
 module.exports = ledgermodel;

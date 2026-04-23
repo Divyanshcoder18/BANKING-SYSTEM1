@@ -1,31 +1,33 @@
 const mongoose = require('mongoose');
 
 const transactionschema = new mongoose.Schema({
-    fromaccount:{
+    fromaccount: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "account", // Lowercase to match monolith
+        ref: "account",
         required: true,
         index: true,
     },
-    toaccount:{
+    toaccount: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "account", // Lowercase to match monolith
+        ref: "account",
         required: true,
     },
-    status:{
+    status: {
         type: String,
         enum: ["PENDING", "SUCCESS", "FAILED"],
         default: "PENDING",
     },
-    amount:{
+    amount: {
         type: Number,
         required: true,
     },
-    idempotencyKey:{
+    idempotencyKey: {
         type: String,
         required: true,
         unique: true,
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model("transaction", transactionschema); // Lowercase "transaction"
+// Safe model registration for microservices
+const transactionmodel = mongoose.models.transaction || mongoose.model("transaction", transactionschema);
+module.exports = transactionmodel;

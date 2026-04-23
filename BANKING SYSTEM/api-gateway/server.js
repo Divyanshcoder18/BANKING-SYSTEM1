@@ -3,68 +3,58 @@ const express = require('express');
 const cors = require('cors');
 const proxy = require('express-http-proxy');
 const rateLimit = require('express-rate-limit');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
-app.use(cors()); 
-
-// RATE LIMITING
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, 
-    limit: 100,
-    message: "Too many requests from this IP, please try again after 15 minutes",
-});
-
-app.use(limiter);
+app.use(cors({ origin: true, credentials: true }));
+app.use(cookieParser());
 app.use(express.json());
 
-// CENTRALIZED LOGGING
+// Gateway Logging
 app.use((req, res, next) => {
     console.log(`[GATEWAY] ${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
 
-const jwt = require('jsonwebtoken'); // Add this at the top
-
-// THE SECURITY GUARD (Authentication Middleware)
 const protect = (req, res, next) => {
-    // 1. Get the token from the "Authorization" header
-    const token = req.headers['authorization'];
+    const authHeader = req.headers['authorization'];
+    const token = req.cookies.token || (authHeader && (authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : authHeader));
 
     if (!token) {
-        return res.status(401).json({ message: "No secret wristband (token) provided!" });
+        console.log("❌ [GATEWAY] Auth Failed: No token found");
+        console.log("🔍 Incoming Headers:", JSON.stringify(req.headers, null, 2));
+        return res.status(401).json({ message: "Authentication required" });
     }
 
-    // 2. Verify the token using our secret key
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, process.env.JWT_SECRET || 'divu123', (err, decoded) => {
         if (err) {
-            return res.status(403).json({ message: "Oops! Your wristband is fake or expired." });
+            console.log("❌ [GATEWAY] Auth Failed: Invalid token", err.message);
+            return res.status(403).json({ message: "Invalid or expired token" });
         }
-
-        // 3. If everything is fine, let them in!
-        req.user = decoded; // We save the user's data for later
-        next(); 
+        console.log(`✅ [GATEWAY] Auth Success: User ${decoded.id}`);
+        req.user = decoded;
+        next();
     });
 };
 
+// SERVICE ROUTING
+app.use('/api/auth', proxy('http://localhost:5002'));
 
+// Proxy with headers preservation
+const proxyOptions = {
+    proxyReqOptDecorator: function (proxyReqOpts, srcReq) {
+        // Ensure tokens and cookies are passed through
+        return proxyReqOpts;
+    }
+};
 
+app.use('/api/users', protect, proxy('http://localhost:5003', proxyOptions));
+app.use('/api/account', protect, proxy('http://localhost:5003', proxyOptions));
+app.use('/api/transaction', protect, proxy('http://localhost:5001', proxyOptions));
 
-
-
-
-
-// ROUTING RECEPTIONS
-app.use('/api/auth',proxy(process.env.AUTH_SERVICE_URL)); // anyone can login no need of protection 
-app.use('/api/users',protect, proxy(process.env.USER_SERVICE_URL));
-app.use('/api/transaction',protect, proxy(process.env.TRANSACTION_SERVICE_URL));
-app.use('/api/notification',protect, proxy(process.env.NOTIFICATION_SERVICE_URL));
-app.use('/api/fraud',protect, proxy(process.env.FRAUD_SERVICE_URL));
-app.use('/api/audit',protect, proxy(process.env.AUDIT_SERVICE_URL));
-
-const PORT = process.env.PORT || 8080;
+const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`📡 API Gateway is running on port ${PORT}`);
-    console.log(`🔒 Rate Limiting is ACTIVE`);
-    console.log(`🚦 Routing is READY`);
+    console.log(`📡 API Gateway Debug Mode active on port ${PORT}`);
 });

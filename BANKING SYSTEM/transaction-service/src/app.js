@@ -9,7 +9,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Prefix all transaction routes with /api/transaction
-app.use('/api/transaction', transactionRoutes);
+// Mount all transaction routes directly (API Gateway handles the /api/transaction prefix)
+app.use('/', transactionRoutes);
 
 module.exports = app;

@@ -1,8 +1,12 @@
 const express = require('express');
 const router = express.Router();
-const { authmiddleware, authsystemmiddleware } = require('../middleware/auth.middleware.js');
-const { createinitialfunds } = require('../Controllers/transaction.controller.js');
+const { authmiddleware } = require('../middleware/auth.middleware.js');
+const { createinitialfunds, createdeposit, createtransfer, gethistory, createwithdraw } = require('../Controllers/transaction.controller.js');
 
-router.post('/transaction', authsystemmiddleware, createinitialfunds);
+router.post('/transaction', authmiddleware, createinitialfunds);
+router.post('/deposit', authmiddleware, createdeposit);
+router.post('/withdraw', authmiddleware, createwithdraw);
+router.post('/transfer', authmiddleware, createtransfer);
+router.get('/history/:accountId', authmiddleware, gethistory);
 
 module.exports = router;

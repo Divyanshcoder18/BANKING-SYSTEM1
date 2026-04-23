@@ -4,9 +4,10 @@ const { accountcontroller, getuseraccount, getbalance } = require("../Controller
 const { authmiddleware } = require("../middleware/auth.middleware.js");
 
 // We add authmiddleware before the controller so req.user is set
-router.post('/account', authmiddleware, accountcontroller); 
+router.post('/account', authmiddleware, accountcontroller);
+router.post('/create', authmiddleware, accountcontroller);
 router.get('/balance', authmiddleware, getbalance);
-router.get('/useraccount', authmiddleware, getuseraccount); 
+router.get('/useraccount', authmiddleware, getuseraccount);
 
 
 module.exports = router;

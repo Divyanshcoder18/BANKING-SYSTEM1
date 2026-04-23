@@ -24,11 +24,11 @@ function Login() {
     try {
       // 4. THE CALL: Send data to your API Gateway
       const response = await API.post('/auth/login', { email, password });
-      
+
       // 5. THE SUCCESS: If backend says OK, we update our Global Context
       login(response.data.user, response.data.token);
-      
-      toast.success('Welcome back to Antigravity Bank!');
+
+      toast.success('Welcome back to Apex Global Bank!');
       navigate('/dashboard'); // Move to the dashboard automatically
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed. Check credentials.');
@@ -40,7 +40,7 @@ function Login() {
   return (
     <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       {/* motion.div: Adds a smooth fade-in effect when the page opens */}
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl"
@@ -53,8 +53,8 @@ function Login() {
             <label className="block text-sm font-bold text-slate-500 ml-1">Email Address</label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-              <input 
-                type="email" 
+              <input
+                type="email"
                 required
                 className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-12 py-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder:text-slate-700"
                 placeholder="name@example.com"
@@ -68,8 +68,8 @@ function Login() {
             <label className="block text-sm font-bold text-slate-500 ml-1">Password</label>
             <div className="relative">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600" size={18} />
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 className="w-full bg-slate-950 border border-slate-800 rounded-2xl px-12 py-4 text-white focus:ring-2 focus:ring-blue-500/50 outline-none transition-all placeholder:text-slate-700"
                 placeholder="••••••••"
@@ -79,7 +79,7 @@ function Login() {
             </div>
           </div>
 
-          <button 
+          <button
             type="submit"
             disabled={loading}
             className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white font-black py-4 rounded-2xl hover:opacity-90 transition-all shadow-lg shadow-blue-600/20 disabled:opacity-50"

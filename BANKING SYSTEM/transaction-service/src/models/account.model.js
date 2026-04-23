@@ -1,19 +1,14 @@
 const mongoose = require('mongoose');
 const acctschema = new mongoose.Schema({
-
     user: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        ref: "UserFresh",
         required: [true, 'User must exist'],
         index: true,
-
     },
     status: {
         type: String,
-        enum: {
-            values: ["ACTIVE", "FREEZE", "CLOSED"],
-            message: "account may be suspended"
-        },
+        enum: ["ACTIVE", "FREEZE", "CLOSED"],
         default: "ACTIVE"
     },
     currency: {
@@ -32,37 +27,20 @@ const acctschema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-acctschema.index({ user: 1, status: 1 });
-
 acctschema.methods.getBalance = async function () {
     const ledgermodel = require('./ledger.models.js');
-
     const balance = await ledgermodel.aggregate([
-        {
-            $match: {
-                account: this._id,
-            }
-        },
-        {
-            $group: {
-                _id: "$type",
-                total: { $sum: "$amount" }
-            }
-        },
-
-    ])
-    let credits = 0;
-    let debit = 0;
+        { $match: { account: this._id } },
+        { $group: { _id: "$type", total: { $sum: "$amount" } } }
+    ]);
+    let credits = 0, debit = 0;
     for (let entry of balance) {
-        if (entry._id == 'CREDIT') {
-            credits += entry.total;
-        }
-        if (entry._id == 'DEBIT') {
-            debit += entry.total;
-        }
+        if (entry._id == 'CREDIT') credits += entry.total;
+        if (entry._id == 'DEBIT') debit += entry.total;
     }
     return credits - debit;
 }
 
-const accountmodel = mongoose.model("account", acctschema);
+// Safe model registration for microservices
+const accountmodel = mongoose.models.account || mongoose.model("account", acctschema);
 module.exports = accountmodel;

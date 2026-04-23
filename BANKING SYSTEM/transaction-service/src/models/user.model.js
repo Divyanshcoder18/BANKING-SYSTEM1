@@ -25,5 +25,6 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-const userModel = mongoose.model("UserFresh", userSchema);
+// Safe model registration for microservices
+const userModel = mongoose.models.UserFresh || mongoose.model("UserFresh", userSchema);
 module.exports = userModel;

@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+// const bcrypt = require('bcryptjs'); // Temporarily disabled for debugging
 
 const userSchema = new mongoose.Schema({
     email: {
@@ -14,18 +14,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: [true, 'name is required'],
         trim: true,
-        minlength: [3, 'name should be at least 3 characters'],
-        maxlength: [12, 'name should be at most 12 characters'],
     },
     password: {
         type: String,
         required: [true, 'password is required'],
-        minlength: [8, 'password length should be at least 8'],
         select: false,
-        match: [
-            /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/,
-            'password must contain at least one lowercase letter, one uppercase letter, one digit, and one special character'
-        ]
     },
     systemUser:{
         type:Boolean,
@@ -34,19 +27,17 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// Temporarily disabled pre-save hook for debugging
+/*
 userSchema.pre("save", async function(next) {
-    if (!this.isModified("password")) {
-        return next();
-    }
-
-    const hash = await bcrypt.hash(this.password, 10);
-    this.password = hash;
-    return next();
+    ...
 });
+*/
 
 userSchema.methods.comparePassword = async function(password) {
-    return bcrypt.compare(password, this.password);
+    // Temporarily direct comparison for debugging
+    return password === this.password;
 };
 
-const userModel = mongoose.model("user", userSchema);
+const userModel = mongoose.model("UserFresh", userSchema);
 module.exports = userModel;

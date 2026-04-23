@@ -2,8 +2,8 @@ import axios from 'axios';
 
 // We create a custom instance of Axios
 const API = axios.create({
-  // This is the URL of your API Gateway
-  baseURL: 'http://localhost:8080/api',
+  // This is the URL of your All-in-one Backend Server (Monolith)
+  baseURL: 'http://localhost:3000/api',
 });
 
 // The INTERCEPTOR
