@@ -66,7 +66,9 @@ const sendEmail = async (to, subject, html) => {
  */
 const sendTransactionEmail = async (type, data) => {
     const { amount, userEmail, from, to, timestamp } = data;
+    console.log(`📡 [NOTIFY] Preparing email for: ${userEmail} (Type: ${type})`);
     const formattedAmount = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+
     const dateStr = new Date(timestamp || Date.now()).toLocaleString();
 
     let subject = `Apex Alert: ${type} of ${formattedAmount}`;
