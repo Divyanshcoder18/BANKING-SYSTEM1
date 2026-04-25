@@ -3,6 +3,12 @@ const usermodel = require('../models/user.model.js');
 const tokenblacklistmodel = require('../models/blacklistmodel.js');
 const { sendregiseremail } = require('../services/email.services.js');
 
+const Redis = require('ioredis');
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+});
+
 const userregistercontroller = async (req, res) => {
     try {
         const { email, password, name } = req.body;
@@ -85,7 +91,8 @@ const userlogoutcontroller = async (req, res) => {
 
         res.cookie("token", "");
 
-        await tokenblacklistmodel.create({ token });
+        // 🛡️ Redis Blacklist Save (Expires in 24 days)
+        await redisClient.set(token, 'blacklisted', 'EX', 24 * 60 * 60 * 30);
         res.status(200).json({ success: true, message: "Logged out successfully" });
     } catch (error) {
         res.status(500).json({ success: false, message: error.message });

@@ -44,6 +44,5 @@ acctschema.methods.getBalance = async function () {
     }
     return credits - debit;
 }
-
 const accountmodel = mongoose.models.account || mongoose.model("account", acctschema);
 module.exports = accountmodel;

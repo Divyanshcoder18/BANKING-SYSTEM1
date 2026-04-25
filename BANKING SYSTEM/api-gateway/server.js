@@ -5,9 +5,17 @@ const proxy = require('express-http-proxy');
 const rateLimit = require('express-rate-limit');
 const jwt = require('jsonwebtoken');
 const cookieParser = require('cookie-parser');
+const Redis = require('ioredis');
+const { RedisStore } = require('rate-limit-redis');
 
 const app = express();
 
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+});
+
+// Middleware
 app.use(cors({ origin: true, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
@@ -17,6 +25,16 @@ app.use((req, res, next) => {
     console.log(`[GATEWAY] ${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
 });
+
+// 🛡️ Rate Limiter (The Bouncer)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    store: new RedisStore({
+        sendCommand: (...args) => redisClient.call(...args),
+    }),
+});
+app.use(limiter);
 
 const protect = (req, res, next) => {
     const authHeader = req.headers['authorization'];

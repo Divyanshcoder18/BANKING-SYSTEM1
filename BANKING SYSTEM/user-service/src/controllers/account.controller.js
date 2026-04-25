@@ -3,6 +3,12 @@ const usermodel = require('../models/user.model.js'); // Ensure this matches Use
 const transactionmodel = require('../models/transaction.model.js');
 const ledgermodel = require('../models/ledger.models.js');
 const mongoose = require('mongoose');
+const Redis = require('ioredis');
+const redisClient = new Redis({
+    host: process.env.REDIS_HOST,
+    port: process.env.REDIS_PORT,
+});
+
 
 async function accountcontroller(req, res) {
     try {
@@ -86,8 +92,19 @@ async function getbalance(req, res) {
 
         if (!account) return res.status(404).json({ success: false, message: "Account not found" });
 
+        // 🛡️ 1. CHECK REDIS FIRST
+        const cachedBalance = await redisClient.get(`balance:${id}`);
+        if (cachedBalance) {
+            console.log(" [REDIS] Serving Balance from Cache");
+            return res.status(200).json({ success: true, balance: cachedBalance, source: 'cache' });
+        }
+
         const balance = await account.getBalance();
-        return res.status(200).json({ success: true, balance: balance });
+
+        // 💾 2. SAVE TO REDIS FOR NEXT TIME (Cache for 1 hour)
+        await redisClient.set(`balance:${id}`, balance, 'EX', 3600);
+
+        return res.status(200).json({ success: true, balance: balance, source: 'database' });
     } catch (error) {
         return res.status(500).json({ success: false, message: error.message });
     }

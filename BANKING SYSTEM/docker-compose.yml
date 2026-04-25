@@ -21,6 +21,13 @@ services:
     networks:
       - banking-network
 
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    networks:
+      - banking-network
+
 
   # --- MICROSERVICES ---
   auth-service:
@@ -30,8 +37,11 @@ services:
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/banking-system
       - JWT_SECRET=divu123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - mongodb
+      - redis
     networks:
       - banking-network
 
@@ -41,8 +51,11 @@ services:
       - "5003:5003"
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/banking-system
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - mongodb
+      - redis
     networks:
       - banking-network
 
@@ -85,10 +98,13 @@ services:
       - USER_SERVICE_URL=http://user-service:5003
       - TRANSACTION_SERVICE_URL=http://transaction-service:5001
       - JWT_SECRET=divu123
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - auth-service
       - user-service
       - transaction-service
+      - redis
     networks:
       - banking-network
 
