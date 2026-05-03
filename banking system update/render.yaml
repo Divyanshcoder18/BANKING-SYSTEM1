@@ -1,0 +1,112 @@
+services:
+  # 1. API Gateway
+  - type: web
+    name: banking-gateway
+    plan: free
+    env: docker
+    rootDir: api-gateway
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: AUTH_SERVICE_URL
+        value: http://banking-auth-service:10000
+      - key: USER_SERVICE_URL
+        value: http://banking-user-service:10000
+      - key: TRANSACTION_SERVICE_URL
+        value: http://banking-transaction-service:10000
+      - key: NOTIFICATION_SERVICE_URL
+        value: http://banking-notification-service:10000
+      - key: FRAUD_SERVICE_URL
+        value: http://banking-fraud-service:10000
+      - key: AUDIT_SERVICE_URL
+        value: http://banking-audit-service:10000
+
+  # 2. Auth Service
+  - type: web
+    name: banking-auth-service
+    plan: free
+    env: docker
+    rootDir: auth-service
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+
+  # 3. User Service
+  - type: web
+    name: banking-user-service
+    plan: free
+    env: docker
+    rootDir: user-service
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: REDIS_URL
+        sync: false
+      - key: RABBITMQ_URI
+        sync: false
+
+  # 4. Transaction Service
+  - type: web
+    name: banking-transaction-service
+    plan: free
+    env: docker
+    rootDir: transaction-service
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: RABBITMQ_URI
+        sync: false
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
+      - key: RAZORPAYX_ACCOUNT_NUMBER
+        sync: false
+
+  # 5. Notification Service
+  - type: web
+    name: banking-notification-service
+    plan: free
+    env: docker
+    rootDir: notification-service
+    envVars:
+      - key: RABBITMQ_URI
+        sync: false
+
+  # 6. Fraud Service
+  - type: web
+    name: banking-fraud-service
+    plan: free
+    env: docker
+    rootDir: fraud-service
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: RABBITMQ_URI
+        sync: false
+
+  # 7. Audit Service
+  - type: web
+    name: banking-audit-service
+    plan: free
+    env: docker
+    rootDir: audit-service
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: RABBITMQ_URI
+        sync: false
